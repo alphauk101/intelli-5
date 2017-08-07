@@ -37,6 +37,8 @@ void loop() {
   //Once we have the time we need to check what lighting phase is required for this time
   get_day_phase();
 
+  intel_data.light_phase = HOUR_NIGHT_PHASE;
+  lighting.set_light_phase(&intel_data);
   //Now we have our phase we should pass it through to the lighting class.
 
 
@@ -56,6 +58,8 @@ void loop() {
 
     intel_data.button_press = NONE;
   }
+
+  delay(250);
 }
 
 void init_app_data()
@@ -87,7 +91,7 @@ static void setup_rtc()
 {
   Wire.begin();
   rtc.begin();
-  //rtc.adjust(DateTime(2017, 1, 1, 20, 0, 0));
+  rtc.adjust(DateTime(2017, 1, 1, 20, 0, 0));
   if (! rtc.isrunning())
   {
     //If the clock is not running then this means something has gone wrong. Its batt backup so in theory once its up its good to go forever.

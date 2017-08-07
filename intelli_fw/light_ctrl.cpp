@@ -29,26 +29,28 @@ void light_control::set_light_phase(INTELLI_DATA * light_data_ptr)
 {
   bool trans = false;
   //First thing we do is check whether we are changing phase
-  if (light_data_ptr->light_phase != _last_phase)
-  {
+  /*
+    if (light_data_ptr->light_phase != _last_phase)
+    {
     //Its time to transpose the lighting
     fade_current_lights();
     //Now we need to go to whichever lighting is next
     trans = true; // we do a transistion
     //Lastly update of current light state
     _last_phase = light_data_ptr->light_phase;
-  } else {
+    } else {
     trans = false;
-  }
-
+    }
+  */
   //now set the appropriate mode
-  switch (light_data_ptr->light_phase)
-  {
+  /*
+    switch (light_data_ptr->light_phase)
+    {
     case HOUR_DAY_PHASE:
-      set_day_mode(trans);
+      set_day_mode(false);
       break;
     case HOUR_EVE_PHASE:
-    //set_day_mode(trans);
+
       break;
     case HOUR_NIGHT_PHASE:
       break;
@@ -56,23 +58,40 @@ void light_control::set_light_phase(INTELLI_DATA * light_data_ptr)
       break;
     default:
       break;
-  }
-
+    }
+  */
+  set_day_mode(false);
 }
 
 /**build to day mode
   pass true to the function causes a transistion**/
 void light_control::set_day_mode(bool trans)
 {
-  if (trans) { /*transist*/
-    for (int a = 0; a < DAY_LED_BRIGHTNESS; a++) {
-      colorWipe(strip.Color(a, a, a), 50); //
+  uint8_t b;
+  if(trans){
+    b = 0;
+  }else{
+    b = DAY_LED_BRIGHTNESS-1;
+  }
+  for (b; b < DAY_LED_BRIGHTNESS; b++) {
+    for (uint16_t i = 0; i < strip.numPixels(); i++) {
+      strip.setPixelColor(i, strip.Color(255, 0, 0));
+      i++;
+      strip.setPixelColor(i, strip.Color(0, 255, 0));
+      i++;
+      strip.setPixelColor(i, strip.Color(0, 0, 255));
+      
     }
+    strip.setBrightness(b);
+    strip.show();
+    delay(10);
   }
 
+
   //Now set all the leds to the appropraite brighntess
-  colorWipe(strip.Color(DAY_LED_BRIGHTNESS, DAY_LED_BRIGHTNESS, DAY_LED_BRIGHTNESS), 0);
+  //(strip.Color(155, 155, 155), 1);
 }
+
 
 
 /*Fades the current lights down to nothings*/
