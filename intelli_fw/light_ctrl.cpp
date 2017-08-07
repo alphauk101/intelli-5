@@ -19,7 +19,7 @@ void light_control::init()
   //On init we may want to makesure the LEDs are in a good state
 
   //To show the unit is init'ing we do a little chase:
-  rainbowCycle(100);
+  rainbowCycle(5);
   colorWipe(strip.Color(0, 0, 0), 50); // Off
 
   _last_phase = HOUR_OFF_PHASE;//They are off
@@ -48,6 +48,7 @@ void light_control::set_light_phase(INTELLI_DATA * light_data_ptr)
       set_day_mode(trans);
       break;
     case HOUR_EVE_PHASE:
+    //set_day_mode(trans);
       break;
     case HOUR_NIGHT_PHASE:
       break;

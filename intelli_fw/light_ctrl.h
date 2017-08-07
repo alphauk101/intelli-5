@@ -9,7 +9,7 @@
 
 
 
-#define LED_DATA_PIN      6
+#define LED_DATA_PIN      5
 #define NUMPIXELS         50 /*Even though we have more the blocks of 50 are parrelled up*/
 
 #define ERROR_RTC_FAIL    0xE1

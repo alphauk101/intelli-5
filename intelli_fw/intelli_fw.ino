@@ -23,7 +23,7 @@ void setup() {
 
   //Our button int handler
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
 
 
   //Make sure our application data is in the right state
@@ -87,6 +87,7 @@ static void setup_rtc()
 {
   Wire.begin();
   rtc.begin();
+  //rtc.adjust(DateTime(2017, 1, 1, 20, 0, 0));
   if (! rtc.isrunning())
   {
     //If the clock is not running then this means something has gone wrong. Its batt backup so in theory once its up its good to go forever.
