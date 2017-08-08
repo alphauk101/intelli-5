@@ -3,6 +3,8 @@
 #include "defines.h"
 #include "light_ctrl.h"
 
+#define TEST_MODE
+
 //Local app data
 static INTELLI_DATA intel_data;
 
@@ -22,8 +24,9 @@ void setup() {
 
   //Our button int handler
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+#ifndef TEST_MODE
   //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
-
+#endif
 
   //Make sure our application data is in the right state
   init_app_data();
@@ -91,14 +94,17 @@ static void setup_rtc()
   Wire.begin();
   rtc.begin();
 
-  //This is just here for test mode
-  rtc.adjust(DateTime(2017, 1, 1, 20, 0, 0));
 
   if (! rtc.isrunning())
   {
     //If the clock is not running then this means something has gone wrong. Its batt backup so in theory once its up its good to go forever.
     //We should tell the user the clock is not set as they will be able to set the clock with a button hold.
-    lighting.show_error(ERROR_RTC_FAIL);
+      //In test mode always sets the time 
+#ifdef TEST_MODE
+  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+#else
+  lighting.show_error(ERROR_RTC_FAIL);
+#endif
   }
 }
 
@@ -108,19 +114,15 @@ static void get_day_phase()
   switch (intel_data.current_time.hour())
   {
     case HOUR_DAY_PHASE:
-
       intel_data.light_phase = HOUR_DAY_PHASE;
       break;
     case HOUR_EVE_PHASE:
-
       intel_data.light_phase = HOUR_EVE_PHASE;
       break;
     case HOUR_NIGHT_PHASE:
-
       intel_data.light_phase = HOUR_NIGHT_PHASE;
       break;
     case HOUR_OFF_PHASE:
-
       intel_data.light_phase = HOUR_OFF_PHASE;
       break;
     default:
