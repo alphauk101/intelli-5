@@ -6,7 +6,6 @@
 //Local app data
 static INTELLI_DATA intel_data;
 
-
 #define LONG_PRESS_COUNT    1000 //how long we wait before considering a long press
 #define BUTTON_PIN    2 //our button pio
 
@@ -37,7 +36,7 @@ void loop() {
   //Once we have the time we need to check what lighting phase is required for this time
   get_day_phase();
 
-  intel_data.light_phase = HOUR_NIGHT_PHASE;
+  //intel_data.light_phase = HOUR_NIGHT_PHASE;
   lighting.set_light_phase(&intel_data);
   //Now we have our phase we should pass it through to the lighting class.
 
@@ -91,7 +90,10 @@ static void setup_rtc()
 {
   Wire.begin();
   rtc.begin();
+
+  //This is just here for test mode
   rtc.adjust(DateTime(2017, 1, 1, 20, 0, 0));
+
   if (! rtc.isrunning())
   {
     //If the clock is not running then this means something has gone wrong. Its batt backup so in theory once its up its good to go forever.
@@ -106,22 +108,22 @@ static void get_day_phase()
   switch (intel_data.current_time.hour())
   {
     case HOUR_DAY_PHASE:
-      //its 9 in the morning
+
       intel_data.light_phase = HOUR_DAY_PHASE;
       break;
     case HOUR_EVE_PHASE:
-      //its 9 in the morning
+
       intel_data.light_phase = HOUR_EVE_PHASE;
       break;
     case HOUR_NIGHT_PHASE:
-      //its 9 in the morning
+
       intel_data.light_phase = HOUR_NIGHT_PHASE;
       break;
     case HOUR_OFF_PHASE:
-      //its 9 in the morning
+
       intel_data.light_phase = HOUR_OFF_PHASE;
       break;
-      default:
+    default:
       //Do nothing as we dont want to change the phase until next phase shift - hehe
       break;
   }

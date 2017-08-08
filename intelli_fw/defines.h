@@ -2,8 +2,16 @@
 #define __DEFINES__
 #include "RTClib.h"
 
-#define DAY_LED_BRIGHTNESS  50 //This is the brightness level set to ALL leds when in day mode
+#define DAY_LED_BRIGHTNESS      50  //This is the brightness level set to ALL leds when in day mode
+#define EVE_LED_BRIGHTNESS      200 //Evening brightness - I'm trying to avoid full power for heat/power reasons
+#define NIGHT_LED_BRIGHTNESS    200 //The night brightness
+#define OFF_LED_BRIGHTNESS      0   //off mode 
 
+#define RGB_LED_INTENSITY       255 //Individual led intensity (not brightness) during none night modes
+#define NIGHT_BLUE_INTENSITY    255
+#define NIGHT_RG_INTENSITY      20  // The red and green led intens during night 
+
+#define TRANS_SPEED_MS      10 //Time of steps during transistion
 
 #define HOUR_DAY_PHASE    9/*This inidicates that the day phase starts at 9am*/
 #define HOUR_EVE_PHASE    18/*eve pahase starts at 6pm*/
@@ -16,7 +24,6 @@ typedef uint8_t LIGHT_PHASE;
 #define SHORT 1
 #define LONG  2
 #define NONE  3
-
 
 //Our application data structure
 typedef struct {

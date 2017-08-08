@@ -1,7 +1,5 @@
 #include "light_ctrl.h"
 
-//We use this to determine what the last phase was primarily so we know when to transist and when not to do anything
-static LIGHT_PHASE _last_phase;
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -29,67 +27,118 @@ void light_control::set_light_phase(INTELLI_DATA * light_data_ptr)
 {
   bool trans = false;
   //First thing we do is check whether we are changing phase
-  /*
-    if (light_data_ptr->light_phase != _last_phase)
-    {
+
+  if (light_data_ptr->light_phase != this->_last_phase)
+  {
     //Its time to transpose the lighting
     fade_current_lights();
     //Now we need to go to whichever lighting is next
     trans = true; // we do a transistion
     //Lastly update of current light state
-    _last_phase = light_data_ptr->light_phase;
-    } else {
+    this->_last_phase = light_data_ptr->light_phase;
+  } else {
     trans = false;
-    }
-  */
+  }
+
   //now set the appropriate mode
-  /*
-    switch (light_data_ptr->light_phase)
-    {
+
+  switch (light_data_ptr->light_phase)
+  {
     case HOUR_DAY_PHASE:
-      set_day_mode(false);
+      this->set_day_mode(trans);
       break;
     case HOUR_EVE_PHASE:
-
+      this->set_eve_mode(trans);
       break;
     case HOUR_NIGHT_PHASE:
+      this->set_night_mode(trans);
       break;
     case HOUR_OFF_PHASE:
+      this->set_off_mode(trans);
       break;
     default:
       break;
-    }
-  */
-  set_day_mode(false);
+  }
 }
 
-/**build to day mode
+void light_control::set_night_mode(bool trans) {
+  //If we are trans'ing then we need to fade up to out night mode problem is our rg lights are duller than the b lights
+  //For now (and this will change) we will fade them up indepedantly
+  if (trans) { //were transitioning
+    for (int i = 0 ; i < NIGHT_LED_BRIGHTNESS; i++) {
+      /*For each step of b led we are increasing the brightness*/
+      this->set_night_step(i);
+      delay(TRANS_SPEED_MS);
+    }
+  } else {
+    //Were not transitioning so just set lights to full brightness
+    this->set_night_step(NIGHT_LED_BRIGHTNESS);
+  }
+}
+
+/*Allows all leds to be set in night mode at the given brightness*/
+void light_control::set_night_step(uint8_t brightness)
+{
+  for (uint8_t j = 0; j < strip.numPixels(); j++) {
+    strip.setPixelColor(j, strip.Color(NIGHT_RG_INTENSITY, 0, 0));
+    j++;
+    strip.setPixelColor(j, strip.Color(0, NIGHT_RG_INTENSITY, 0));
+    j++;
+    strip.setPixelColor(j, strip.Color(0, 0, NIGHT_BLUE_INTENSITY));
+  }
+  //Once all the leds have been stored we can update the display
+  strip.setBrightness(brightness);
+  strip.show();
+}
+
+/*set day mode
   pass true to the function causes a transistion**/
 void light_control::set_day_mode(bool trans)
 {
+  this->set_rgb_level(DAY_LED_BRIGHTNESS, trans);
+}
+
+/*set eve mode*/
+void light_control::set_eve_mode(bool trans)
+{
+  this->set_rgb_level(EVE_LED_BRIGHTNESS, trans);
+}
+
+/*set off mode*/
+void light_control::set_off_mode(bool trans)
+{
+  this->set_rgb_level(OFF_LED_BRIGHTNESS, trans);
+}
+
+
+/*This allows for this action to set from different functions*/
+void light_control::set_rgb_level(uint8_t level, bool trans)
+{
+  /*
+    If we choose to not have a transistion then the loop only goes round once ie. setting b to the loop exit value -1
+    this will have the action of setting the lights once.
+    If we transist this will swell the lights up slowly.
+    This is not necessarily a good transistion but its a start.
+  */
   uint8_t b;
-  if(trans){
+  if (trans) {
     b = 0;
-  }else{
-    b = DAY_LED_BRIGHTNESS-1;
+  } else {
+    b = level;
   }
-  for (b; b < DAY_LED_BRIGHTNESS; b++) {
+  for (b; b <= level; b++) {
     for (uint16_t i = 0; i < strip.numPixels(); i++) {
-      strip.setPixelColor(i, strip.Color(255, 0, 0));
+      strip.setPixelColor(i, strip.Color(RGB_LED_INTENSITY, 0, 0));
       i++;
-      strip.setPixelColor(i, strip.Color(0, 255, 0));
+      strip.setPixelColor(i, strip.Color(0, RGB_LED_INTENSITY, 0));
       i++;
-      strip.setPixelColor(i, strip.Color(0, 0, 255));
-      
+      strip.setPixelColor(i, strip.Color(0, 0, RGB_LED_INTENSITY));
+
     }
     strip.setBrightness(b);
     strip.show();
-    delay(10);
+    delay(TRANS_SPEED_MS);
   }
-
-
-  //Now set all the leds to the appropraite brighntess
-  //(strip.Color(155, 155, 155), 1);
 }
 
 
@@ -102,7 +151,8 @@ void light_control::fade_current_lights()
   {
     bright--;
     strip.setBrightness(bright);
-    delay(30);
+    strip.show();
+    delay(TRANS_SPEED_MS);
   }
 
 }

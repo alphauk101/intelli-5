@@ -21,11 +21,19 @@ class light_control
   void show_error(byte);
   void set_light_phase(INTELLI_DATA *);
   private:
+  //We use this to determine what the last phase was primarily so we know when to transist and when not to do anything
+  LIGHT_PHASE _last_phase;
+  void set_night_mode(bool);
   void fade_current_lights(void);
   void rainbowCycle(uint8_t);
   uint32_t Wheel(byte);
   void colorWipe(uint32_t , uint8_t);
   void set_day_mode(bool);
+  void set_eve_mode(bool);
+  void set_off_mode(bool);
+  void set_rgb_level(uint8_t , bool );
+  void set_night_step(uint8_t);
+  
 };
 
 
