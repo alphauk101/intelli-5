@@ -25,7 +25,8 @@ void setup() {
   //Our button int handler
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifndef TEST_MODE
-  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
+//disable during testing - primarily because we have no button attached
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
 #endif
 
   //Make sure our application data is in the right state
@@ -101,6 +102,7 @@ static void setup_rtc()
     //We should tell the user the clock is not set as they will be able to set the clock with a button hold.
       //In test mode always sets the time 
 #ifdef TEST_MODE
+  //when in test mode actaul set the real time and date
   rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 #else
   lighting.show_error(ERROR_RTC_FAIL);
