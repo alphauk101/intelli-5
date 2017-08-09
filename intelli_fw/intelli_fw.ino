@@ -8,7 +8,7 @@
 //Local app data
 static INTELLI_DATA intel_data;
 
-#define LONG_PRESS_COUNT    1000 //how long we wait before considering a long press
+
 #define BUTTON_PIN    2 //our button pio
 
 light_control lighting;
@@ -25,7 +25,7 @@ void setup() {
   //Our button int handler
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifndef TEST_MODE
-//disable during testing - primarily because we have no button attached
+  //disable during testing - primarily because we have no button attached
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
 #endif
 
@@ -43,8 +43,6 @@ void loop() {
   //intel_data.light_phase = HOUR_NIGHT_PHASE;
   lighting.set_light_phase(&intel_data);
   //Now we have our phase we should pass it through to the lighting class.
-
-
 
   //Part of the main loop is checking whether the button has been pressed
   if (intel_data.button_press != NONE)
@@ -77,6 +75,7 @@ void pin_change_isr()
   //A long press dictates a time set
   uint16_t count = 0;
   while (digitalRead(BUTTON_PIN) == LOW) { //down to gnd when pressed
+    //We know blocking in an ISR is bad but this is a simple program
     count++;
     delay(50);
   }
@@ -100,12 +99,12 @@ static void setup_rtc()
   {
     //If the clock is not running then this means something has gone wrong. Its batt backup so in theory once its up its good to go forever.
     //We should tell the user the clock is not set as they will be able to set the clock with a button hold.
-      //In test mode always sets the time 
+    //In test mode always sets the time
 #ifdef TEST_MODE
-  //when in test mode actaul set the real time and date
-  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    //when in test mode actaul set the real time and date
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 #else
-  lighting.show_error(ERROR_RTC_FAIL);
+    lighting.show_error(ERROR_RTC_FAIL);
 #endif
   }
 }
@@ -113,23 +112,27 @@ static void setup_rtc()
 static void get_day_phase()
 {
   //We will simplily use hours at the moment to change phase
-  switch (intel_data.current_time.hour())
-  {
-    case HOUR_DAY_PHASE:
-      intel_data.light_phase = HOUR_DAY_PHASE;
-      break;
-    case HOUR_EVE_PHASE:
-      intel_data.light_phase = HOUR_EVE_PHASE;
-      break;
-    case HOUR_NIGHT_PHASE:
-      intel_data.light_phase = HOUR_NIGHT_PHASE;
-      break;
-    case HOUR_OFF_PHASE:
-      intel_data.light_phase = HOUR_OFF_PHASE;
-      break;
-    default:
-      //Do nothing as we dont want to change the phase until next phase shift - hehe
-      break;
-  }
+  //We olny want to action the change at the start of the hour, we do this to solve one simple issue
+  //Pressing the button effectively cancels the current phase - we dont want the phase to then in turn be cancelled by this
+  if (intel_data.current_time.minute() == 0) {
+    switch (intel_data.current_time.hour())
+    {
+      case HOUR_DAY_PHASE:
+        intel_data.light_phase = HOUR_DAY_PHASE;
+        break;
+      case HOUR_EVE_PHASE:
+        intel_data.light_phase = HOUR_EVE_PHASE;
+        break;
+      case HOUR_NIGHT_PHASE:
+        intel_data.light_phase = HOUR_NIGHT_PHASE;
+        break;
+      case HOUR_OFF_PHASE:
+        intel_data.light_phase = HOUR_OFF_PHASE;
+        break;
+      default:
+        //Do nothing as we dont want to change the phase until next phase shift - hehe
+        break;
+    }
+  }/*This is not the 0 minute so do nothing*/
 }
 

@@ -155,7 +155,6 @@ void light_control::fade_current_lights()
     strip.show();
     delay(TRANS_SPEED_MS);
   }
-
 }
 
 
