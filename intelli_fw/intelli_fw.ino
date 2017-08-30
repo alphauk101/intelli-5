@@ -31,6 +31,7 @@ void setup() {
 
   //Make sure our application data is in the right state
   init_app_data();
+  lighting.set_light_phase(&intel_data);
 }
 
 void loop() {
@@ -66,7 +67,7 @@ void loop() {
 void init_app_data()
 {
   intel_data.current_time = rtc.now();//update or time so its current
-  intel_data.light_phase = HOUR_OFF_PHASE;//Light phase is defaulted to off and then update when the code runs
+  intel_data.light_phase = HOUR_EVE_PHASE;//Light phase is defaulted to off and then update when the code runs
   intel_data.button_press = NONE;
 }
 

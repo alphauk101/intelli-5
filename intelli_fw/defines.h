@@ -5,13 +5,13 @@
 #define LONG_PRESS_COUNT    100 //how long we wait before considering a long press 100 = 5seconds (ish)
 
 #define DAY_LED_BRIGHTNESS      50  //This is the brightness level set to ALL leds when in day mode
-#define EVE_LED_BRIGHTNESS      200 //Evening brightness - I'm trying to avoid full power for heat/power reasons
+#define EVE_LED_BRIGHTNESS      250 //Evening brightness - I'm trying to avoid full power for heat/power reasons
 #define NIGHT_LED_BRIGHTNESS    200 //The night brightness
 #define OFF_LED_BRIGHTNESS      0   //off mode 
 
-#define RGB_LED_INTENSITY       255 //Individual led intensity (not brightness) during none night modes
-#define NIGHT_BLUE_INTENSITY    255
-#define NIGHT_RG_INTENSITY      20  // The red and green led intens during night 
+#define RGB_LED_INTENSITY       250 //Individual led intensity (not brightness) during none night modes
+#define NIGHT_BLUE_INTENSITY    250
+#define NIGHT_RG_INTENSITY      5  // The red and green led intens during night 
 
 #define TRANS_SPEED_MS      10 //Time of steps during transistion
 

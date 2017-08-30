@@ -113,6 +113,7 @@ void light_control::set_off_mode(bool trans)
 
 
 /*This allows for this action to set from different functions*/
+uint8_t b;
 void light_control::set_rgb_level(uint8_t level, bool trans)
 {
   /*
@@ -121,7 +122,7 @@ void light_control::set_rgb_level(uint8_t level, bool trans)
     If we transist this will swell the lights up slowly.
     This is not necessarily a good transistion but its a start.
   */
-  uint8_t b;
+  
   if (trans) {
     b = 0;
   } else {
