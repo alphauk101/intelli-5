@@ -33,6 +33,7 @@ class light_control
   void set_off_mode(bool);
   void set_rgb_level(uint8_t , bool );
   void set_night_step(uint8_t);
+  void set_red_tint(void);
   
 };
 

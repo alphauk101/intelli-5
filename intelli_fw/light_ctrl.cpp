@@ -19,7 +19,7 @@ void light_control::init()
 
   //To show the unit is init'ing we do a little chase:
   rainbowCycle(5);
-  colorWipe(strip.Color(0, 0, 0), 50); // Off
+  colorWipe(strip.Color(0, 0, 0), 20); // Off
 
   _last_phase = HOUR_OFF_PHASE;//They are off
 }
@@ -81,9 +81,9 @@ void light_control::set_night_mode(bool trans) {
 void light_control::set_night_step(uint8_t brightness)
 {
   for (uint8_t j = 0; j < strip.numPixels(); j++) {
-    strip.setPixelColor(j, strip.Color(NIGHT_RG_INTENSITY, 0, 0));
+    strip.setPixelColor(j, strip.Color(NIGHT_WHITE_INTENSITY, NIGHT_WHITE_INTENSITY, NIGHT_WHITE_INTENSITY));
     j++;
-    strip.setPixelColor(j, strip.Color(0, NIGHT_RG_INTENSITY, 0));
+    strip.setPixelColor(j, strip.Color(0, 0, NIGHT_BLUE_INTENSITY));
     j++;
     strip.setPixelColor(j, strip.Color(0, 0, NIGHT_BLUE_INTENSITY));
   }
@@ -102,7 +102,26 @@ void light_control::set_day_mode(bool trans)
 /*set eve mode*/
 void light_control::set_eve_mode(bool trans)
 {
-  this->set_rgb_level(EVE_LED_BRIGHTNESS, trans);
+  if (trans) {
+    //If we are transisting modes then we should do it
+    this->set_rgb_level(EVE_LED_BRIGHTNESS, trans);
+  } else {
+    //We can change our style if we wish
+    this->set_red_tint();
+  }
+}
+
+void light_control::set_red_tint()
+{
+  for (uint16_t i = 0; i < strip.numPixels(); i++) {
+    strip.setPixelColor(i, strip.Color(255, 0, 0));
+    i++;
+    strip.setPixelColor(i, strip.Color(255, 0, 0));
+    i++;
+    strip.setPixelColor(i, strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY));
+  }
+  strip.setBrightness(EVE_LED_BRIGHTNESS);
+  strip.show();
 }
 
 /*set off mode*/
@@ -122,7 +141,7 @@ void light_control::set_rgb_level(uint8_t level, bool trans)
     If we transist this will swell the lights up slowly.
     This is not necessarily a good transistion but its a start.
   */
-  
+
   if (trans) {
     b = 0;
   } else {
@@ -186,7 +205,7 @@ void light_control::colorWipe(uint32_t c, uint8_t wait) {
 void light_control::rainbowCycle(uint8_t wait) {
   uint16_t i, j;
 
-  for (j = 0; j < 256 * 5; j++) { // 5 cycles of all colors on wheel
+  for (j = 0; j < 256 * 2; j++) { // 5 cycles of all colors on wheel
     for (i = 0; i < strip.numPixels(); i++) {
       strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
     }
