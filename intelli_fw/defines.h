@@ -2,6 +2,8 @@
 #define __DEFINES__
 #include "RTClib.h"
 
+#define DEBUG
+
 #define LONG_PRESS_COUNT    100 //how long we wait before considering a long press 100 = 5seconds (ish)
 
 #define DAY_LED_BRIGHTNESS      35  //This is the brightness level set to ALL leds when in day mode

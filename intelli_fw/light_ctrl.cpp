@@ -12,8 +12,12 @@
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, LED_DATA_PIN, NEO_GRB + NEO_KHZ800);
 
+
 void light_control::init()
 {
+#ifdef DEBUG
+  Serial.println("Lighting starting");
+#endif
   strip.begin(); // This initializes the NeoPixel library.
   //On init we may want to makesure the LEDs are in a good state
 
@@ -22,6 +26,8 @@ void light_control::init()
   colorWipe(strip.Color(0, 0, 0), 20); // Off
 
   _last_phase = HOUR_OFF_PHASE;//They are off
+  //Set this to the standard effect on boot
+  eve_effect = STANDARD;
 }
 
 void light_control::set_light_phase(INTELLI_DATA * light_data_ptr)
@@ -100,15 +106,174 @@ void light_control::set_day_mode(bool trans)
 }
 
 /*set eve mode*/
+EVE_EFFECT prev_effect;
 void light_control::set_eve_mode(bool trans)
 {
   if (trans) {
     //If we are transisting modes then we should do it
     this->set_rgb_level(EVE_LED_BRIGHTNESS, trans);
+    //We need to make sure we are set to standard so we dont get mixed up
+    eve_effect = STANDARD;
+    prev_effect = STANDARD;
   } else {
     //We can change our style if we wish
-    this->set_red_tint();
+    this->set_effect(prev_effect, eve_effect);
+    prev_effect = eve_effect;
+
+
+
+    //this->set_red_tint();
   }
+}
+
+void light_control::set_effect(EVE_EFFECT old_effect, EVE_EFFECT new_effect)
+{
+  /*
+     #define STANDARD  0
+    #define ROSE      1
+    #define SKY       2
+    #define GREEN     3
+  */
+  uint32_t new_color;
+  switch (new_effect)
+  {
+    case STANDARD:
+      new_color = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+      break;
+    case ROSE:
+      new_color = strip.Color(RGB_LED_INTENSITY, 0, 0);
+      break;
+    case SKY:
+      new_color = strip.Color(RGB_LED_INTENSITY, 150, 0);
+      break;
+    case GREEN:
+      new_color = strip.Color(0, RGB_LED_INTENSITY, 0);
+      break;
+    default:
+      new_color = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+      break;
+  }
+
+  if (new_effect != old_effect) {
+    bool looped = true;
+    bool finished = true;
+    uint32_t update_color = 0;
+    while (looped) {
+      finished = true;
+      for (uint16_t i = 0; i < strip.numPixels(); i++) {
+        //i = strip.getPixelColor(i);
+        if (update_pixel_transistion(&update_color, new_color, i) == false)
+        {
+          finished = false;
+        }
+      }
+      strip.setBrightness(EVE_LED_BRIGHTNESS);
+      strip.show();
+      delay(50);
+      if (finished) //are we done?
+      {
+        looped = false;
+        break;
+      }
+    }
+    /*
+      uint32_t new_c = 0;
+      switch (new_effect)
+      {
+      case STANDARD:
+        new_c = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+        break;
+      case ROSE:
+        new_c = strip.Color(RGB_LED_INTENSITY, 0, 0);
+        break;
+      case SKY:
+        new_c = strip.Color(RGB_LED_INTENSITY, 150, 0);
+        break;
+      case GREEN:
+        new_c = strip.Color(0, RGB_LED_INTENSITY, 0);
+        break;
+      default:
+        new_c = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+        break;
+      }
+      bool looped = true;
+      uint32_t tmp_c = 0;
+      while (looped) {
+      looped = false;;
+      for (uint16_t i = 0; i < strip.numPixels(); i++) {
+        if ((i % 2) == 0) {
+          tmp_c = strip.getPixelColor(i);
+          if (tmp_c > new_c) {
+            tmp_c--;
+            looped = true;
+          } else if (tmp_c < new_c) {
+            tmp_c++;
+            looped = true;
+          }
+          strip.setPixelColor(i, tmp_c);
+        } else {
+          //Its an odd pixel so make it default white
+          strip.setPixelColor(i, strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY));
+        }
+      }
+      strip.setBrightness(EVE_LED_BRIGHTNESS);
+      strip.show();
+      delay(50);
+      }
+    */
+  }/*If its the old same effect dont do anything*/
+}
+
+/*Takes the current light value of the selected pixel compares it to the new colour trans and
+  makes it one gradient closer to that colour
+  returns a boolean if the transistion is complete*/
+bool light_control::update_pixel_transistion(uint32_t * new_c, uint32_t trans_c, uint16_t pix)
+{
+  uint32_t trans_color = trans_c;//Make this ther trans color and then if something goes wrong we dont end up with off
+  new_c = &trans_color;
+  bool flag = true; //set to positive and change on otherwise.
+
+  uint32_t old_color = strip.getPixelColor(pix);
+  //First before we do any operations we should check that the colours are not currently the same
+  if (old_color != trans_c) {
+    uint8_t old_red = (uint8_t)((uint32_t) old_color >> 16);
+    uint8_t old_green = (uint8_t)((uint32_t)old_color >> 8);
+    uint8_t old_blue = (uint8_t) old_color;
+
+    //We have our original colours now get the trans colors
+    uint8_t trans_red = (uint8_t)((uint32_t) trans_c >> 16);
+    uint8_t trans_green = (uint8_t)((uint32_t) trans_c >> 8);
+    uint8_t trans_blue = (uint8_t)((uint32_t) trans_c);
+
+    //Now do the comparison
+    uint8_t tmp_red = this->compare_pix_ammend(old_red, trans_red);
+    if (tmp_red != 0) flag = false;
+
+    uint8_t tmp_green = this->compare_pix_ammend(old_green, trans_green);
+    if (tmp_green != 0) flag = false;
+
+    uint8_t tmp_blue = this->compare_pix_ammend(old_blue, trans_blue);
+    if (tmp_blue != 0) flag = false;
+
+    trans_color = strip.Color(tmp_red, tmp_green, tmp_blue);
+    return flag;
+  } else {
+    flag = true;//trans is complete.
+  }
+  //return result
+  return flag;
+}
+
+uint8_t light_control::compare_pix_ammend(uint8_t old_col, uint8_t new_col) {
+  if (old_col > new_col)
+  {
+    new_col++;
+  } else if (old_col < new_col) {
+    new_col--;
+  } else {
+    //value stay the same
+  }
+  return new_col;
 }
 
 void light_control::set_red_tint()
@@ -154,7 +319,6 @@ void light_control::set_rgb_level(uint8_t level, bool trans)
       strip.setPixelColor(i, strip.Color(0, RGB_LED_INTENSITY, 0));
       i++;
       strip.setPixelColor(i, strip.Color(0, 0, RGB_LED_INTENSITY));
-
     }
     strip.setBrightness(b);
     strip.show();
@@ -228,5 +392,18 @@ uint32_t light_control::Wheel(byte WheelPos) {
   }
   WheelPos -= 170;
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+//Used to change the evening effect driven by the RTC
+void light_control::effect_shift_timer()
+{
+
+  eve_effect++;
+  if (eve_effect > GREEN) eve_effect = STANDARD;
+
+#ifdef DEBUG
+  Serial.print("CHANGING EFFECT: ");
+  Serial.println(eve_effect, DEC);
+#endif
 }
 

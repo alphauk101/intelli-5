@@ -5,6 +5,7 @@
 
 #define TEST_MODE
 
+
 //Local app data
 static INTELLI_DATA intel_data;
 
@@ -15,7 +16,10 @@ light_control lighting;
 RTC_DS1307 rtc;
 
 void setup() {
-
+#ifdef DEBUG
+  Serial.begin(9600);
+  Serial.println("Intelli 5 - debugging enabled");
+#endif
   //We need to make sure our lighting is up and running before doing anything else
   lighting.init();
 
@@ -26,8 +30,11 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifndef TEST_MODE
   //disable during testing - primarily because we have no button attached
-  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), pin_change_isr, CHANGE);
 #endif
+
+
+
 
   //Make sure our application data is in the right state
   init_app_data();
@@ -43,8 +50,9 @@ void loop() {
 
   //intel_data.light_phase = HOUR_NIGHT_PHASE;
   lighting.set_light_phase(&intel_data);
+  lighting.effect_shift_timer();
   //Now we have our phase we should pass it through to the lighting class.
-
+#ifdef NO_BUTTON
   //Part of the main loop is checking whether the button has been pressed
   if (intel_data.button_press != NONE)
   {
@@ -60,8 +68,25 @@ void loop() {
 
     intel_data.button_press = NONE;
   }
-
+#endif
   delay(250);
+#ifdef DEBUG
+  DateTime now = rtc.now();
+  Serial.print(now.year(), HEX);
+  Serial.print('/');
+  Serial.print(now.month(), HEX);
+  Serial.print('/');
+  Serial.print(now.day(), HEX);
+  Serial.print(" (");
+  Serial.print(now.dayOfTheWeek(),HEX);
+  Serial.print(") ");
+  Serial.print(now.hour(), HEX);
+  Serial.print(':');
+  Serial.print(now.minute(), HEX);
+  Serial.print(':');
+  Serial.print(now.second(), HEX);
+  Serial.println();
+#endif
 }
 
 void init_app_data()
@@ -139,5 +164,15 @@ static void get_day_phase()
         break;
     }
   }/*This is not the 0 minute so do nothing*/
+
+
+  //We need to use the minutes change the eve mode
+  if ( (intel_data.current_time.minute() == 0) ||
+       (intel_data.current_time.minute() == 15) ||
+       (intel_data.current_time.minute() == 30) ||
+       (intel_data.current_time.minute() == 45)) {
+    lighting.effect_shift_timer();
+  }
+
 }
 
