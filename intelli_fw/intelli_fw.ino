@@ -98,6 +98,8 @@ void init_app_data()
     #define HOUR_NIGHT_PHASE  20
     #define HOUR_OFF_PHASE    0*/
   intel_data.current_time = rtc.now();//update or time so its current
+  //intel_data.light_phase = HOUR_DAY_PHASE;//Light phase is defaulted to off and then update when the code runs
+ // intel_data.light_phase = HOUR_NIGHT_PHASE;//Light phase is defaulted to off and then update when the code runs
   intel_data.light_phase = HOUR_EVE_PHASE;//Light phase is defaulted to off and then update when the code runs
   intel_data.button_press = NONE;
 }

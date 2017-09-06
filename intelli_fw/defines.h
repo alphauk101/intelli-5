@@ -22,8 +22,8 @@
 #define ROSE_BLUE               50
 #define ROSE_GREEN              50
 /*SKY*/
-#define SKY_RED                 110
-#define SKY_GREEN               110
+#define SKY_RED                 190
+#define SKY_GREEN               190
 #define SKY_BLUE                255
 /*GREEN*/
 #define GREEN_RED               50
