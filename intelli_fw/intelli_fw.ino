@@ -5,10 +5,10 @@
 
 #define TEST_MODE
 
-
 //Local app data
 static INTELLI_DATA intel_data;
 
+bool g_changed;
 
 #define BUTTON_PIN    2 //our button pio
 
@@ -20,6 +20,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println("Intelli 5 - debugging enabled");
 #endif
+  g_changed = false;
   //We need to make sure our lighting is up and running before doing anything else
   lighting.init();
 
@@ -50,7 +51,7 @@ void loop() {
 
   //intel_data.light_phase = HOUR_NIGHT_PHASE;
   lighting.set_light_phase(&intel_data);
-  lighting.effect_shift_timer();
+  //lighting.effect_shift_timer();
   //Now we have our phase we should pass it through to the lighting class.
 #ifdef NO_BUTTON
   //Part of the main loop is checking whether the button has been pressed
@@ -70,19 +71,20 @@ void loop() {
   }
 #endif
   delay(250);
+
 #ifdef DEBUG
   DateTime now = rtc.now();
-  Serial.print(now.year(), HEX);
+  Serial.print(now.year(), DEC);
   Serial.print('/');
-  Serial.print(now.month(), HEX);
+  Serial.print(now.month(), DEC);
   Serial.print('/');
-  Serial.print(now.day(), HEX);
+  Serial.print(now.day(), DEC);
   Serial.print(" (");
-  Serial.print(now.dayOfTheWeek(),HEX);
+  Serial.print(now.dayOfTheWeek(), DEC);
   Serial.print(") ");
-  Serial.print(now.hour(), HEX);
+  Serial.print(now.hour(), DEC);
   Serial.print(':');
-  Serial.print(now.minute(), HEX);
+  Serial.print(now.minute(), DEC);
   Serial.print(':');
   Serial.print(now.second(), HEX);
   Serial.println();
@@ -137,7 +139,10 @@ static void setup_rtc()
     lighting.show_error(ERROR_RTC_FAIL);
 #endif
   }
+
+  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 }
+
 
 static void get_day_phase()
 {
@@ -171,7 +176,13 @@ static void get_day_phase()
        (intel_data.current_time.minute() == 15) ||
        (intel_data.current_time.minute() == 30) ||
        (intel_data.current_time.minute() == 45)) {
-    lighting.effect_shift_timer();
+    if (g_changed == false) {
+      lighting.effect_shift_timer();
+      g_changed = true;//make sure we only do it once
+    }
+  } else {
+    //we can now reset this
+    g_changed = false;
   }
 
 }

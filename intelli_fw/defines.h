@@ -7,16 +7,30 @@
 #define LONG_PRESS_COUNT    100 //how long we wait before considering a long press 100 = 5seconds (ish)
 
 #define DAY_LED_BRIGHTNESS      35  //This is the brightness level set to ALL leds when in day mode
-#define EVE_LED_BRIGHTNESS      250 //Evening brightness - I'm trying to avoid full power for heat/power reasons
+#define EVE_LED_BRIGHTNESS      200 //Evening brightness - I'm trying to avoid full power for heat/power reasons
 #define NIGHT_LED_BRIGHTNESS    200 //The night brightness
 #define OFF_LED_BRIGHTNESS      0   //off mode 
 
 #define RGB_LED_INTENSITY       250 //Individual led intensity (not brightness) during none night modes
+#define MAX_LED_INTENSITY       255
+#define LOW_LED_INTENSITY       30
 #define NIGHT_BLUE_INTENSITY    250
 #define NIGHT_WHITE_INTENSITY   40  // The red and green led intens during night 
 
+/*Rose*/
+#define ROSE_RED                255
+#define ROSE_BLUE               50
+#define ROSE_GREEN              50
+/*SKY*/
+#define SKY_RED                 110
+#define SKY_GREEN               110
+#define SKY_BLUE                255
+/*GREEN*/
+#define GREEN_RED               50
+#define GREEN_GREEN             255
+#define GREEN_BLUE              50
 
-#define TRANS_SPEED_MS      10 //Time of steps during transistion
+#define TRANS_SPEED_MS      50 //Time of steps during transistion
 
 #define HOUR_DAY_PHASE    9/*This inidicates that the day phase starts at 9am*/
 #define HOUR_EVE_PHASE    18/*eve pahase starts at 6pm*/

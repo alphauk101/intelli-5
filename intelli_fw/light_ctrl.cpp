@@ -12,6 +12,7 @@
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, LED_DATA_PIN, NEO_GRB + NEO_KHZ800);
 
+static LED_MATRIX g_led_matrix[NUMPIXELS];
 
 void light_control::init()
 {
@@ -134,47 +135,54 @@ void light_control::set_effect(EVE_EFFECT old_effect, EVE_EFFECT new_effect)
     #define SKY       2
     #define GREEN     3
   */
-  uint32_t new_color;
+  LED_MATRIX new_color;
   switch (new_effect)
   {
     case STANDARD:
-      new_color = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+      //new_color = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+      new_color.red = MAX_LED_INTENSITY;
+      new_color.green = MAX_LED_INTENSITY;
+      new_color.blue = MAX_LED_INTENSITY;
       break;
     case ROSE:
-      new_color = strip.Color(RGB_LED_INTENSITY, 0, 0);
+      new_color.red =   ROSE_RED;
+      new_color.green = ROSE_GREEN;
+      new_color.blue =  ROSE_BLUE;
       break;
     case SKY:
-      new_color = strip.Color(RGB_LED_INTENSITY, 150, 0);
+      new_color.red =   SKY_RED;
+      new_color.green = SKY_GREEN;
+      new_color.blue =  SKY_BLUE;
       break;
     case GREEN:
-      new_color = strip.Color(0, RGB_LED_INTENSITY, 0);
+      new_color.red =   GREEN_RED;
+      new_color.green = GREEN_GREEN;
+      new_color.blue =  GREEN_BLUE;
       break;
     default:
-      new_color = strip.Color(RGB_LED_INTENSITY, RGB_LED_INTENSITY, RGB_LED_INTENSITY);
+      new_color.red = MAX_LED_INTENSITY;
+      new_color.green = MAX_LED_INTENSITY;
+      new_color.blue = MAX_LED_INTENSITY;
       break;
   }
 
   if (new_effect != old_effect) {
     bool looped = true;
-    bool finished = true;
     uint32_t update_color = 0;
     while (looped) {
-      finished = true;
+      looped = false;
       for (uint16_t i = 0; i < strip.numPixels(); i++) {
         //i = strip.getPixelColor(i);
-        if (update_pixel_transistion(&update_color, new_color, i) == false)
+        if (update_pixel_transistion(new_color, i) == false)
         {
-          finished = false;
+          /*So if the tranaisition is not finished we should do loops
+            until it is finished*/
+          looped = true;
         }
       }
       strip.setBrightness(EVE_LED_BRIGHTNESS);
       strip.show();
-      delay(50);
-      if (finished) //are we done?
-      {
-        looped = false;
-        break;
-      }
+      delay(TRANS_SPEED_MS);
     }
     /*
       uint32_t new_c = 0;
@@ -227,15 +235,60 @@ void light_control::set_effect(EVE_EFFECT old_effect, EVE_EFFECT new_effect)
 /*Takes the current light value of the selected pixel compares it to the new colour trans and
   makes it one gradient closer to that colour
   returns a boolean if the transistion is complete*/
-bool light_control::update_pixel_transistion(uint32_t * new_c, uint32_t trans_c, uint16_t pix)
+bool light_control::update_pixel_transistion(LED_MATRIX new_c, uint16_t pix)
 {
-  uint32_t trans_color = trans_c;//Make this ther trans color and then if something goes wrong we dont end up with off
-  new_c = &trans_color;
-  bool flag = true; //set to positive and change on otherwise.
+  LED_MATRIX old_pixel = g_led_matrix[pix];
+  LED_MATRIX apply_pixel;
 
-  uint32_t old_color = strip.getPixelColor(pix);
-  //First before we do any operations we should check that the colours are not currently the same
-  if (old_color != trans_c) {
+  apply_pixel.red = this->compare_pix_ammend(old_pixel.red, new_c.red);
+  apply_pixel.green = this->compare_pix_ammend(old_pixel.green, new_c.green);
+  apply_pixel.blue = this->compare_pix_ammend(old_pixel.blue, new_c.blue);
+/*
+  Serial.print("Old Red: ");
+  Serial.println(old_pixel.red);
+  Serial.print("New Red: ");
+  Serial.println(new_c.red);
+  Serial.print("Trans red: ");
+  Serial.println(apply_pixel.red);
+  Serial.println("---------------------------------------");
+
+  Serial.print("P: ");
+  Serial.println(pix);
+  Serial.print("Old Blue: ");
+  Serial.println(old_pixel.blue);
+  Serial.print("New Blue: ");
+  Serial.println(new_c.blue);
+  Serial.print("Trans Blue: ");
+  Serial.println(apply_pixel.blue);
+  Serial.println("---------------------------------------");
+*/
+
+  for (int a = 0; a < NUMPIXELS; a++)
+  {
+    g_led_matrix[a].red = apply_pixel.red;
+    g_led_matrix[a].green = apply_pixel.green;
+    g_led_matrix[a].blue = apply_pixel.blue;
+  }
+  this->apply_matrix();
+
+  if ((new_c.red == apply_pixel.red) &&
+      (new_c.green == apply_pixel.green) &&
+      (new_c.blue == apply_pixel.blue))
+  {
+    //If they are the same then we have completed our trans
+    return true;
+  } else {
+    return false;
+  }
+
+  /*
+    uint32_t trans_color = trans_c;//Make this ther trans color and then if something goes wrong we dont end up with off
+    new_c = &trans_color;
+    bool flag = true; //set to positive and change on otherwise.
+
+    uint32_t old_color = strip.getPixelColor(pix);
+    //First before we do any operations we should check that the colours are not currently the same
+    if (old_color != trans_c) {
     uint8_t old_red = (uint8_t)((uint32_t) old_color >> 16);
     uint8_t old_green = (uint8_t)((uint32_t)old_color >> 8);
     uint8_t old_blue = (uint8_t) old_color;
@@ -257,23 +310,27 @@ bool light_control::update_pixel_transistion(uint32_t * new_c, uint32_t trans_c,
 
     trans_color = strip.Color(tmp_red, tmp_green, tmp_blue);
     return flag;
-  } else {
+    } else {
     flag = true;//trans is complete.
-  }
-  //return result
-  return flag;
+    }
+    //return result
+    return flag;
+  */
 }
 
-uint8_t light_control::compare_pix_ammend(uint8_t old_col, uint8_t new_col) {
-  if (old_col > new_col)
-  {
-    new_col++;
+uint8_t light_control::compare_pix_ammend(uint8_t old_col, uint8_t new_col)
+{
+  uint8_t apply = old_col;
+  if (old_col > new_col) {
+    apply = (old_col-1);
+    //new_col++;
   } else if (old_col < new_col) {
-    new_col--;
+    apply = (old_col+1);
+    //new_col--;
   } else {
     //value stay the same
   }
-  return new_col;
+  return apply;
 }
 
 void light_control::set_red_tint()
@@ -295,6 +352,22 @@ void light_control::set_off_mode(bool trans)
   this->set_rgb_level(OFF_LED_BRIGHTNESS, trans);
 }
 
+void light_control::apply_matrix()
+{
+  uint8_t row = 0;
+  for (uint16_t i = 0; i < strip.numPixels(); i++) {
+    /*
+    strip.setPixelColor(i, strip.Color(g_led_matrix[row].red , 0, 0));
+    i++;
+    strip.setPixelColor(i, strip.Color(0, g_led_matrix[row].green, 0));
+    i++;
+    strip.setPixelColor(i, strip.Color(0, 0, g_led_matrix[row].blue));
+    */
+    strip.setPixelColor(i, strip.Color(g_led_matrix[row].red , g_led_matrix[row].green, g_led_matrix[row].blue));
+    if ((i != 0) && ((i % 10) == 0))row++;
+  }
+}
+
 
 /*This allows for this action to set from different functions*/
 uint8_t b;
@@ -306,6 +379,11 @@ void light_control::set_rgb_level(uint8_t level, bool trans)
     If we transist this will swell the lights up slowly.
     This is not necessarily a good transistion but its a start.
   */
+  for (int a = 0 ; a < strip.numPixels(); a++) {
+    g_led_matrix[a].red = MAX_LED_INTENSITY;
+    g_led_matrix[a].green = MAX_LED_INTENSITY;
+    g_led_matrix[a].blue = MAX_LED_INTENSITY;
+  }
 
   if (trans) {
     b = 0;
@@ -313,13 +391,7 @@ void light_control::set_rgb_level(uint8_t level, bool trans)
     b = level;
   }
   for (b; b <= level; b++) {
-    for (uint16_t i = 0; i < strip.numPixels(); i++) {
-      strip.setPixelColor(i, strip.Color(RGB_LED_INTENSITY, 0, 0));
-      i++;
-      strip.setPixelColor(i, strip.Color(0, RGB_LED_INTENSITY, 0));
-      i++;
-      strip.setPixelColor(i, strip.Color(0, 0, RGB_LED_INTENSITY));
-    }
+    apply_matrix();
     strip.setBrightness(b);
     strip.show();
     delay(TRANS_SPEED_MS);
@@ -397,13 +469,10 @@ uint32_t light_control::Wheel(byte WheelPos) {
 //Used to change the evening effect driven by the RTC
 void light_control::effect_shift_timer()
 {
-
+  eve_effect = random(0, 5);
+  /*
   eve_effect++;
   if (eve_effect > GREEN) eve_effect = STANDARD;
-
-#ifdef DEBUG
-  Serial.print("CHANGING EFFECT: ");
-  Serial.println(eve_effect, DEC);
-#endif
+  */
 }
 

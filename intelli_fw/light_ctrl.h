@@ -19,6 +19,12 @@ static EVE_EFFECT eve_effect;
 
 #define ERROR_RTC_FAIL    0xE1
 
+typedef struct{
+  uint8_t red;
+  uint8_t green;
+  uint8_t blue;
+}LED_MATRIX;
+
 class light_control
 {
   public:
@@ -41,8 +47,9 @@ class light_control
     void set_night_step(uint8_t);
     void set_red_tint(void);
     void set_effect(EVE_EFFECT, EVE_EFFECT);
-    bool update_pixel_transistion(uint32_t * new_c, uint32_t trans_c, uint16_t pix);
+    bool update_pixel_transistion(LED_MATRIX new_c,uint16_t pix);
     uint8_t compare_pix_ammend(uint8_t old_col, uint8_t new_col);
+    void apply_matrix(void);
 
 };
 
