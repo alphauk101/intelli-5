@@ -142,7 +142,7 @@ static void setup_rtc()
 #endif
   }
 
-  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 }
 
 

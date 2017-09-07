@@ -469,7 +469,7 @@ uint32_t light_control::Wheel(byte WheelPos) {
 //Used to change the evening effect driven by the RTC
 void light_control::effect_shift_timer()
 {
-  eve_effect = random(0, 5);
+  eve_effect = random(0, 4);
   /*
   eve_effect++;
   if (eve_effect > GREEN) eve_effect = STANDARD;
